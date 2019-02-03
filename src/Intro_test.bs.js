@@ -2,9 +2,16 @@
 'use strict';
 
 var Jest = require("@glennsl/bs-jest/src/jest.js");
+var List = require("bs-platform/lib/js/list.js");
+var $$Array = require("bs-platform/lib/js/array.js");
 var Block = require("bs-platform/lib/js/block.js");
 var $$String = require("bs-platform/lib/js/string.js");
 var Caml_obj = require("bs-platform/lib/js/caml_obj.js");
+var Caml_array = require("bs-platform/lib/js/caml_array.js");
+var Pervasives = require("bs-platform/lib/js/pervasives.js");
+var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exceptions.js");
+
+var Records = /* module */[];
 
 describe("Basic types", (function () {
         describe("Booleans", (function () {
@@ -80,6 +87,226 @@ describe("Basic types", (function () {
         return /* () */0;
       }));
 
+describe("Infix operators", (function () {
+        return Jest.test("can be defined (but only with these characters = < > @ ^ | & + - * / $ %)", (function (param) {
+                      var $star$dot$dot$dot$star = function (a, b) {
+                        return "start -> here is a: " + (a + ("here is b: " + (b + " -> bye")));
+                      };
+                      return Jest.Expect[/* toBe */2]("start -> here is a: ahere is b: b -> bye", Jest.Expect[/* expect */0]($star$dot$dot$dot$star("a", "b")));
+                    }));
+      }));
+
+describe("Tuples", (function () {
+        Jest.test("can hold heterogeneous data", (function (param) {
+                return Jest.Expect[/* toEqual */12](/* tuple */[
+                            1,
+                            "hola"
+                          ], Jest.Expect[/* expect */0](/* tuple */[
+                                1,
+                                "hola"
+                              ]));
+              }));
+        return Jest.test("can be destructured (pattern matched)", (function (param) {
+                      return Jest.Expect[/* toBe */2]("hola", Jest.Expect[/* expect */0]("hola"));
+                    }));
+      }));
+
+describe("Lists", (function () {
+        Jest.test("can only hold homogeneous data", (function (param) {
+                return Jest.Expect[/* toBe */2](2, Jest.Expect[/* expect */0](List.length(/* :: */[
+                                    1,
+                                    /* :: */[
+                                      2,
+                                      /* [] */0
+                                    ]
+                                  ])));
+              }));
+        Jest.test("can be extended with spread operator", (function (param) {
+                var newList_001 = /* :: */[
+                  2,
+                  /* :: */[
+                    3,
+                    /* :: */[
+                      1,
+                      /* :: */[
+                        2,
+                        /* [] */0
+                      ]
+                    ]
+                  ]
+                ];
+                var newList = /* :: */[
+                  1,
+                  newList_001
+                ];
+                return Jest.Expect[/* toEqual */12](/* :: */[
+                            1,
+                            /* :: */[
+                              2,
+                              /* :: */[
+                                3,
+                                /* :: */[
+                                  1,
+                                  /* :: */[
+                                    2,
+                                    /* [] */0
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ], Jest.Expect[/* expect */0](newList));
+              }));
+        Jest.test("can be concatenated with @ operator", (function (param) {
+                return Jest.Expect[/* toEqual */12](/* :: */[
+                            "a",
+                            /* :: */[
+                              "b",
+                              /* :: */[
+                                "c",
+                                /* :: */[
+                                  "d",
+                                  /* [] */0
+                                ]
+                              ]
+                            ]
+                          ], Jest.Expect[/* expect */0](Pervasives.$at(/* :: */[
+                                    "a",
+                                    /* :: */[
+                                      "b",
+                                      /* [] */0
+                                    ]
+                                  ], /* :: */[
+                                    "c",
+                                    /* :: */[
+                                      "d",
+                                      /* [] */0
+                                    ]
+                                  ])));
+              }));
+        Jest.test("can be mapped, reduced, etc", (function (param) {
+                return Jest.Expect[/* toEqual */12](/* :: */[
+                            2,
+                            /* :: */[
+                              3,
+                              /* :: */[
+                                4,
+                                /* [] */0
+                              ]
+                            ]
+                          ], Jest.Expect[/* expect */0](List.map((function (a) {
+                                      return a + 1 | 0;
+                                    }), /* :: */[
+                                    1,
+                                    /* :: */[
+                                      2,
+                                      /* :: */[
+                                        3,
+                                        /* [] */0
+                                      ]
+                                    ]
+                                  ])));
+              }));
+        return Jest.test("can be destructured (pattern matched)", (function (param) {
+                      return Jest.Expect[/* toEqual */12](/* :: */[
+                                  2,
+                                  /* [] */0
+                                ], Jest.Expect[/* expect */0](/* :: */[
+                                      2,
+                                      /* [] */0
+                                    ]));
+                    }));
+      }));
+
+describe("Arrays", (function () {
+        Jest.test("can only hold homogeneous data", (function (param) {
+                var myArray = /* array */[
+                  1,
+                  2
+                ];
+                return Jest.Expect[/* toBe */2](2, Jest.Expect[/* expect */0](myArray.length));
+              }));
+        Jest.test("can be accessed by index with bracket notation", (function (param) {
+                var myArray = /* array */[
+                  1,
+                  2
+                ];
+                return Jest.Expect[/* toBe */2](1, Jest.Expect[/* expect */0](Caml_array.caml_array_get(myArray, 0)));
+              }));
+        Jest.test("are mutable", (function (param) {
+                var myArray = /* array */[
+                  1,
+                  2
+                ];
+                Caml_array.caml_array_set(myArray, 0, 0);
+                return Jest.Expect[/* toBe */2](0, Jest.Expect[/* expect */0](Caml_array.caml_array_get(myArray, 0)));
+              }));
+        Jest.test("can be mapped, reduced, etc", (function (param) {
+                return Jest.Expect[/* toEqual */12](/* array */[
+                            2,
+                            3,
+                            4
+                          ], Jest.Expect[/* expect */0]($$Array.map((function (a) {
+                                      return a + 1 | 0;
+                                    }), /* array */[
+                                    1,
+                                    2,
+                                    3
+                                  ])));
+              }));
+        return Jest.test("can be destructured (pattern matched)", (function (param) {
+                      var match = /* array */[
+                        1,
+                        2
+                      ];
+                      if (match.length !== 2) {
+                        throw [
+                              Caml_builtin_exceptions.match_failure,
+                              /* tuple */[
+                                "Intro_test.re",
+                                176,
+                                8
+                              ]
+                            ];
+                      } else {
+                        var first = match[0];
+                        var second = match[1];
+                        return Jest.Expect[/* toEqual */12](/* array */[
+                                    2,
+                                    1
+                                  ], Jest.Expect[/* expect */0](/* array */[
+                                        second,
+                                        first
+                                      ]));
+                      }
+                    }));
+      }));
+
+describe("Records", (function () {
+        Jest.test("allow access to their fields with dot notation", (function (param) {
+                return Jest.Expect[/* toBe */2](4, Jest.Expect[/* expect */0](4));
+              }));
+        Jest.test("are immutable by default", (function (param) {
+                return Jest.Expect[/* toBe */2](4, Jest.Expect[/* expect */0](4));
+              }));
+        Jest.test("can be made mutable", (function (param) {
+                var myPoint = /* record */[
+                  /* x */4,
+                  /* y */5
+                ];
+                myPoint[/* x */0] = 1;
+                return Jest.Expect[/* toBe */2](1, Jest.Expect[/* expect */0](myPoint[/* x */0]));
+              }));
+        Jest.test("can be parametrized at declaration", (function (param) {
+                return Jest.Expect[/* toBe */2]("hola", Jest.Expect[/* expect */0]("hola"));
+              }));
+        Jest.test("can be spread to form new records", (function (param) {
+                return Jest.Expect[/* toBe */2](10, Jest.Expect[/* expect */0](10));
+              }));
+        return Jest.test("can be destructured (pattern matched)", (function (param) {
+                      return Jest.Expect[/* toBe */2](3, Jest.Expect[/* expect */0](3));
+                    }));
+      }));
+
 describe("Equality", (function () {
         Jest.test("Structural(==): tuples", (function (param) {
                 return Jest.Expect[/* toBe */2](true, Jest.Expect[/* expect */0](Caml_obj.caml_equal(/* tuple */[
@@ -151,4 +378,5 @@ describe("Equality", (function () {
                     }));
       }));
 
+exports.Records = Records;
 /*  Not a pure module */

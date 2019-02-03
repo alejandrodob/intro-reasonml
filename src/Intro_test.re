@@ -1,9 +1,23 @@
 open Jest;
 open Expect;
-type point = {
-  x: int,
-  y: int,
+
+module Records = {
+  type point = {
+    x: int,
+    y: int,
+  };
+
+  type parametrizedPoint('a, 'b) = {
+    x: 'a,
+    y: 'b,
+  };
+
+  type mutablePoint = {
+    mutable x: int,
+    mutable y: int,
+  };
 };
+
 type tree('a) =
   | Node('a, tree('a), tree('a))
   | Leaf('a);
@@ -86,6 +100,122 @@ abc") |> toBe("abc\nabc")
   });
 });
 
+describe("Infix operators", () =>
+  test(
+    "can be defined (but only with these characters = < > @ ^ | & + - * / $ %)",
+    () => {
+    let ( *...* ) = (a, b) =>
+      "start -> " ++ "here is a: " ++ a ++ "here is b: " ++ b ++ " -> bye";
+
+    expect("a" *...* "b") |> toBe("start -> here is a: ahere is b: b -> bye");
+  })
+);
+
+describe("Tuples", () => {
+  test("can hold heterogeneous data", () =>
+    expect((1, "hola")) |> toEqual((1, "hola"))
+  );
+
+  test("can be destructured (pattern matched)", () => {
+    let (_, (hi, _)) = (1, ("hola", "adios"));
+    expect(hi) |> toBe("hola");
+  });
+});
+
+describe("Lists", () => {
+  test("can only hold homogeneous data", () => {
+    /* let myList = [1, "1"]; won't compile!! */
+    let myList = [1, 2];
+    expect(List.length(myList)) |> toBe(2);
+  });
+
+  test("can be extended with spread operator", () => {
+    let shortList = [1, 2];
+    let newList = [1, 2, 3, ...shortList];
+    /* let newList1 = [...shortList, ...shortList]; won't compile!! */
+    expect(newList) |> toEqual([1, 2, 3, 1, 2]);
+  });
+
+  test("can be concatenated with @ operator", () =>
+    expect(["a", "b"] @ ["c", "d"]) |> toEqual(["a", "b", "c", "d"])
+  );
+
+  test("can be mapped, reduced, etc", () =>
+    expect(List.map(a => a + 1, [1, 2, 3])) |> toEqual([2, 3, 4])
+  );
+
+  test("can be destructured (pattern matched)", () => {
+    let [_, ...rest] = [1, 2];
+    expect(rest) |> toEqual([2]);
+  });
+});
+
+describe("Arrays", () => {
+  test("can only hold homogeneous data", () => {
+    /* let myArray = [|1, "1"|]; won't compile!! */
+    let myArray = [|1, 2|];
+    expect(Array.length(myArray)) |> toBe(2);
+  });
+
+  test("can be accessed by index with bracket notation", () => {
+    let myArray = [|1, 2|];
+    expect(myArray[0]) |> toBe(1);
+  });
+
+  test("are mutable", () => {
+    let myArray = [|1, 2|];
+    myArray[0] = 0;
+    expect(myArray[0]) |> toBe(0);
+  });
+
+  test("can be mapped, reduced, etc", () =>
+    expect(Array.map(a => a + 1, [|1, 2, 3|])) |> toEqual([|2, 3, 4|])
+  );
+
+  test("can be destructured (pattern matched)", () => {
+    let [|first, second|] = [|1, 2|];
+    expect([|second, first|]) |> toEqual([|2, 1|]);
+  });
+});
+
+describe("Records", () => {
+  open Records;
+  test("allow access to their fields with dot notation", () => {
+    let myPoint: point = {x: 4, y: 5};
+    expect(myPoint.x) |> toBe(4);
+  });
+
+  test("are immutable by default", () => {
+    let myPoint: point = {x: 4, y: 5};
+    /* The following does not compile */
+    /* myPoint.x = 1; */
+    expect(myPoint.x) |> toBe(4);
+  });
+
+  test("can be made mutable", () => {
+    let myPoint: mutablePoint = {x: 4, y: 5};
+    myPoint.x = 1;
+    expect(myPoint.x) |> toBe(1);
+  });
+
+  test("can be parametrized at declaration", () => {
+    let myPoint: parametrizedPoint(string, int) = {x: "hola", y: 5};
+    expect(myPoint.x) |> toBe("hola");
+  });
+
+  test("can be spread to form new records", () => {
+    let myPoint: point = {x: 3, y: 5};
+    let myNewPoint = {...myPoint, x: 10};
+    expect(myNewPoint.x) |> toBe(10);
+  });
+
+  test("can be destructured (pattern matched)", () => {
+    let myPoint: point = {x: 3, y: 5};
+    let {x: xCoord}: point = myPoint;
+    expect(xCoord) |> toBe(3);
+  });
+});
+
 describe("Equality", () => {
   test("Structural(==): tuples", () =>
     expect((1, "abc") == (1, "abc")) |> toBe(true)
@@ -96,7 +226,7 @@ describe("Equality", () => {
   );
 
   test("Structural(==): records", () =>
-    expect({x: 2, y: 3} == {x: 2, y: 3}) |> toBe(true)
+    Records.(expect({x: 2, y: 3} == {x: 2, y: 3}) |> toBe(true))
   );
 
   test("Structural(==): recursive data structures", ()
