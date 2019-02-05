@@ -8,6 +8,7 @@ var Block = require("bs-platform/lib/js/block.js");
 var $$String = require("bs-platform/lib/js/string.js");
 var Caml_obj = require("bs-platform/lib/js/caml_obj.js");
 var Caml_array = require("bs-platform/lib/js/caml_array.js");
+var Caml_int32 = require("bs-platform/lib/js/caml_int32.js");
 var Pervasives = require("bs-platform/lib/js/pervasives.js");
 var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exceptions.js");
 
@@ -90,9 +91,9 @@ describe("Basic types", (function () {
 describe("Infix operators", (function () {
         return Jest.test("can be defined (but only with these characters = < > @ ^ | & + - * / $ %)", (function (param) {
                       var $star$dot$dot$dot$star = function (a, b) {
-                        return "start -> here is a: " + (a + ("here is b: " + (b + " -> bye")));
+                        return "start -> here is a: " + (a + (", here is b: " + (b + " -> bye")));
                       };
-                      return Jest.Expect[/* toBe */2]("start -> here is a: ahere is b: b -> bye", Jest.Expect[/* expect */0]($star$dot$dot$dot$star("a", "b")));
+                      return Jest.Expect[/* toBe */2]("start -> here is a: a, here is b: b -> bye", Jest.Expect[/* expect */0]($star$dot$dot$dot$star("a", "b")));
                     }));
       }));
 
@@ -263,7 +264,7 @@ describe("Arrays", (function () {
                               Caml_builtin_exceptions.match_failure,
                               /* tuple */[
                                 "Intro_test.re",
-                                176,
+                                173,
                                 8
                               ]
                             ];
@@ -304,6 +305,73 @@ describe("Records", (function () {
               }));
         return Jest.test("can be destructured (pattern matched)", (function (param) {
                       return Jest.Expect[/* toBe */2](3, Jest.Expect[/* expect */0](3));
+                    }));
+      }));
+
+var Variants = /* module */[];
+
+describe("Variants", (function () {
+        Jest.test("can be used as sets of symbols or enums", (function (param) {
+                return Jest.Expect[/* toBe */2](/* Blue */1, Jest.Expect[/* not_ */23](Jest.Expect[/* expect */0](/* Red */0)));
+              }));
+        Jest.test("can hold data that can be destructured (pattern matched)", (function (param) {
+                return Jest.Expect[/* toBe */2]("El Presi", Jest.Expect[/* expect */0]("El Presi"));
+              }));
+        Jest.test("can be recursive", (function (param) {
+                var barbol = /* Node */Block.__(0, [
+                    "raiz",
+                    /* Node */Block.__(0, [
+                        "rama",
+                        /* Leaf */Block.__(1, ["Hoja"]),
+                        /* Node */Block.__(0, [
+                            "rama",
+                            /* Leaf */Block.__(1, ["Hoja"]),
+                            /* Leaf */Block.__(1, ["Hoja"])
+                          ])
+                      ]),
+                    /* Node */Block.__(0, [
+                        "rama",
+                        /* Leaf */Block.__(1, ["Hoja"]),
+                        /* Leaf */Block.__(1, ["Hoja"])
+                      ])
+                  ]);
+                return Jest.Expect[/* toBe */2](true, Jest.Expect[/* expect */0](Caml_obj.caml_equal(barbol, barbol)));
+              }));
+        return Jest.test("option type", (function (param) {
+                      return Jest.Expect[/* toBe */2]("Pez", Jest.Expect[/* expect */0]("Pez"));
+                    }));
+      }));
+
+describe("Functions", (function () {
+        Jest.test("are defined like js arrow functions", (function (param) {
+                return Jest.Expect[/* toBe */2](5, Jest.Expect[/* expect */0](5));
+              }));
+        Jest.test("can be  anonymous", (function (param) {
+                return Jest.Expect[/* toBe */2](5, Jest.Expect[/* expect */0](5));
+              }));
+        Jest.test("are automatically curried", (function (param) {
+                return Jest.Expect[/* toBe */2](5, Jest.Expect[/* expect */0](5));
+              }));
+        Jest.test("can have labeled arguments", (function (param) {
+                return Jest.Expect[/* toBe */2](5, Jest.Expect[/* expect */0](5));
+              }));
+        Jest.test("can have labeled arguments (with default values)", (function (param) {
+                var first = 4;
+                return Jest.Expect[/* toBe */2](5, Jest.Expect[/* expect */0](first + 1 | 0));
+              }));
+        Jest.test("can be explicitly defined recursive", (function (param) {
+                var factorial = function (n) {
+                  var match = n <= 2;
+                  if (match) {
+                    return n;
+                  } else {
+                    return Caml_int32.imul(n, factorial(n - 1 | 0));
+                  }
+                };
+                return Jest.Expect[/* toBe */2](120, Jest.Expect[/* expect */0](factorial(5)));
+              }));
+        return Jest.test("can be annotated with types", (function (param) {
+                      return Jest.Expect[/* toBe */2](7, Jest.Expect[/* expect */0](/* x */7));
                     }));
       }));
 
@@ -379,4 +447,5 @@ describe("Equality", (function () {
       }));
 
 exports.Records = Records;
+exports.Variants = Variants;
 /*  Not a pure module */

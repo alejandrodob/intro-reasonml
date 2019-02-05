@@ -18,10 +18,6 @@ module Records = {
   };
 };
 
-type tree('a) =
-  | Node('a, tree('a), tree('a))
-  | Leaf('a);
-
 describe("Basic types", () => {
   describe("Booleans", () => {
     test("negation", () =>
@@ -105,9 +101,10 @@ describe("Infix operators", () =>
     "can be defined (but only with these characters = < > @ ^ | & + - * / $ %)",
     () => {
     let ( *...* ) = (a, b) =>
-      "start -> " ++ "here is a: " ++ a ++ "here is b: " ++ b ++ " -> bye";
+      "start -> " ++ "here is a: " ++ a ++ ", here is b: " ++ b ++ " -> bye";
 
-    expect("a" *...* "b") |> toBe("start -> here is a: ahere is b: b -> bye");
+    expect("a" *...* "b")
+    |> toBe("start -> here is a: a, here is b: b -> bye");
   })
 );
 
@@ -216,6 +213,98 @@ describe("Records", () => {
   });
 });
 
+module Variants = {
+  type colors =
+    | Red
+    | Blue;
+
+  type user =
+    | Admin(string)
+    | User(string);
+
+  type tree('a) =
+    | Node('a, tree('a), tree('a))
+    | Leaf('a);
+};
+
+describe("Variants", () => {
+  test("can be used as sets of symbols or enums", () => {
+    let red = Variants.Red;
+    let blue = Variants.Blue;
+    expect(red) |> not |> toBe(blue);
+  });
+
+  test("can hold data that can be destructured (pattern matched)", () => {
+    open Variants;
+    let presi = Admin("El Presi");
+    let Admin(presiName) = presi;
+    expect(presiName) |> toBe("El Presi");
+  });
+
+  test("can be recursive", () => {
+    open Variants;
+    let barbol =
+      Node(
+        "raiz",
+        Node(
+          "rama",
+          Leaf("Hoja"),
+          Node("rama", Leaf("Hoja"), Leaf("Hoja")),
+        ),
+        Node("rama", Leaf("Hoja"), Leaf("Hoja")),
+      );
+    expect(barbol == barbol) |> toBe(true);
+  });
+
+  test("option type", () => {
+    let pescar = anzuelo => {
+      anzuelo > 5 ? Some("Pez") : None;
+    };
+    /* expect(pescar(2)) |> toBe(None); */
+    expect(pescar(6)) |> toBe(Some("Pez"));
+  });
+});
+
+describe("Functions", () => {
+  test("are defined like js arrow functions", () => {
+    let sum = (a, b) => a + b;
+    expect(sum(1, 4)) |> toBe(5);
+  });
+
+  test("can be  anonymous", () =>
+    expect(((a, b) => a + b)(1, 4)) |> toBe(5)
+  );
+
+  test("are automatically curried", () => {
+    let sum = (a, b) => a + b;
+    /* Sugar for: */
+    /* let sum = (a) =>(b) => a + b; */
+    let sumFour = sum(4);
+    expect(sumFour(1)) |> toBe(5);
+  });
+
+  test("can have labeled arguments", () => {
+    let sum = (~first, ~second) => first + second;
+    let sumFour = sum(~first=4);
+    expect(sumFour(~second=1)) |> toBe(5);
+  });
+
+  test("can have labeled arguments (with default values)", () => {
+    let sum = (~first=4, second) => first + second;
+    expect(sum(1)) |> toBe(5);
+  });
+
+  test("can be explicitly defined recursive", () => {
+    let rec factorial = n => n <= 2 ? n : n * factorial(n - 1);
+    expect(factorial(5)) |> toBe(120);
+  });
+
+  test("can be annotated with types", () => {
+    let makePoint = (a: int, b: int): Records.point => Records.{x: a, y: b};
+    expect(makePoint(7, 2).x) |> toBe(7);
+  });
+});
+
 describe("Equality", () => {
   test("Structural(==): tuples", () =>
     expect((1, "abc") == (1, "abc")) |> toBe(true)
@@ -238,9 +327,11 @@ describe("Equality", () => {
                 5   9
        */
     =>
-      expect(
-        Node(2, Node(1, Leaf(5), Leaf(9)), Leaf(3))
-        == Node(2, Node(1, Leaf(5), Leaf(9)), Leaf(3)),
+      Variants.(
+        expect(
+          Node(2, Node(1, Leaf(5), Leaf(9)), Leaf(3))
+          == Node(2, Node(1, Leaf(5), Leaf(9)), Leaf(3)),
+        )
       )
       |> toBe(true)
     );
