@@ -5,11 +5,14 @@ var Jest = require("@glennsl/bs-jest/src/jest.js");
 var List = require("bs-platform/lib/js/list.js");
 var $$Array = require("bs-platform/lib/js/array.js");
 var Block = require("bs-platform/lib/js/block.js");
+var Curry = require("bs-platform/lib/js/curry.js");
 var $$String = require("bs-platform/lib/js/string.js");
 var Caml_obj = require("bs-platform/lib/js/caml_obj.js");
 var Caml_array = require("bs-platform/lib/js/caml_array.js");
 var Caml_int32 = require("bs-platform/lib/js/caml_int32.js");
 var Pervasives = require("bs-platform/lib/js/pervasives.js");
+var Caml_option = require("bs-platform/lib/js/caml_option.js");
+var Caml_primitive = require("bs-platform/lib/js/caml_primitive.js");
 var Caml_builtin_exceptions = require("bs-platform/lib/js/caml_builtin_exceptions.js");
 
 var Records = /* module */[];
@@ -359,7 +362,7 @@ describe("Functions", (function () {
                 var first = 4;
                 return Jest.Expect[/* toBe */2](5, Jest.Expect[/* expect */0](first + 1 | 0));
               }));
-        Jest.test("can be explicitly defined recursive", (function (param) {
+        Jest.test("must be explicitly defined recursive", (function (param) {
                 var factorial = function (n) {
                   var match = n <= 2;
                   if (match) {
@@ -373,6 +376,179 @@ describe("Functions", (function () {
         return Jest.test("can be annotated with types", (function (param) {
                       return Jest.Expect[/* toBe */2](7, Jest.Expect[/* expect */0](/* x */7));
                     }));
+      }));
+
+describe("Pattern matching", (function () {
+        Jest.test("Single assignment is pattern matching", (function (param) {
+                return Jest.Expect[/* toBe */2](2, Jest.Expect[/* expect */0](2));
+              }));
+        Jest.test("Destructuring crazy nested data structures is pattern matching", (function (param) {
+                var exit = 0;
+                var match_001 = /* array */[
+                  1,
+                  2,
+                  3
+                ];
+                var match_002 = /* record */[
+                  /* x */3,
+                  /* y */5
+                ];
+                var match = match_001;
+                if (match.length !== 3) {
+                  exit = 1;
+                } else {
+                  var match$1 = match[0];
+                  if (match$1 !== 1) {
+                    exit = 1;
+                  } else {
+                    var match$2 = match[1];
+                    if (match$2 !== 2) {
+                      exit = 1;
+                    } else {
+                      var y = match[2];
+                      return Jest.Expect[/* toBe */2](3, Jest.Expect[/* expect */0](y));
+                    }
+                  }
+                }
+                if (exit === 1) {
+                  throw [
+                        Caml_builtin_exceptions.match_failure,
+                        /* tuple */[
+                          "Intro_test.re",
+                          318,
+                          8
+                        ]
+                      ];
+                }
+                
+              }));
+        Jest.test("Alternatives in patterns", (function (param) {
+                if (1 > 1) {
+                  throw [
+                        Caml_builtin_exceptions.match_failure,
+                        /* tuple */[
+                          "Intro_test.re",
+                          324,
+                          8
+                        ]
+                      ];
+                } else {
+                  return Jest.Expect[/* toBe */2](2, Jest.Expect[/* expect */0](2));
+                }
+              }));
+        describe("Switch", (function () {
+                Jest.test("On lists", (function (param) {
+                        var reduce = function (fn, _value, _xs) {
+                          while(true) {
+                            var xs = _xs;
+                            var value = _value;
+                            if (xs) {
+                              _xs = xs[1];
+                              _value = Curry._2(fn, value, xs[0]);
+                              continue ;
+                            } else {
+                              return value;
+                            }
+                          };
+                        };
+                        return Jest.Expect[/* toBe */2](10, Jest.Expect[/* expect */0](reduce((function (sum, i) {
+                                              return sum + i | 0;
+                                            }), 0, /* :: */[
+                                            1,
+                                            /* :: */[
+                                              2,
+                                              /* :: */[
+                                                3,
+                                                /* :: */[
+                                                  4,
+                                                  /* [] */0
+                                                ]
+                                              ]
+                                            ]
+                                          ])));
+                      }));
+                Jest.test("On lists ++", (function (param) {
+                        var nth = function (_n, _xs) {
+                          while(true) {
+                            var xs = _xs;
+                            var n = _n;
+                            if (xs) {
+                              if (n !== 0) {
+                                _xs = xs[1];
+                                _n = n - 1 | 0;
+                                continue ;
+                              } else {
+                                return Caml_option.some(xs[0]);
+                              }
+                            } else {
+                              return undefined;
+                            }
+                          };
+                        };
+                        return Jest.Expect[/* toBe */2](4, Jest.Expect[/* expect */0](nth(4, /* :: */[
+                                            0,
+                                            /* :: */[
+                                              1,
+                                              /* :: */[
+                                                2,
+                                                /* :: */[
+                                                  3,
+                                                  /* :: */[
+                                                    4,
+                                                    /* :: */[
+                                                      5,
+                                                      /* :: */[
+                                                        6,
+                                                        /* [] */0
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ])));
+                      }));
+                Jest.test("On records", (function (param) {
+                        var getQuadrant = function (param) {
+                          var match = param[/* x */0] > 0;
+                          var match$1 = param[/* y */1] > 0;
+                          if (match) {
+                            if (match$1) {
+                              return 1;
+                            } else {
+                              return 4;
+                            }
+                          } else if (match$1) {
+                            return 2;
+                          } else {
+                            return 3;
+                          }
+                        };
+                        return Jest.Expect[/* toBe */2](4, Jest.Expect[/* expect */0](getQuadrant(/* record */[
+                                            /* x */3,
+                                            /* y */-1
+                                          ])));
+                      }));
+                return Jest.test("On Variants", (function (param) {
+                              var depth = function (tree) {
+                                if (tree.tag) {
+                                  return 1;
+                                } else {
+                                  return 1 + Caml_primitive.caml_int_max(depth(tree[1]), depth(tree[2])) | 0;
+                                }
+                              };
+                              return Jest.Expect[/* toBe */2](3, Jest.Expect[/* expect */0](depth(/* Node */Block.__(0, [
+                                                    2,
+                                                    /* Node */Block.__(0, [
+                                                        1,
+                                                        /* Leaf */Block.__(1, [5]),
+                                                        /* Leaf */Block.__(1, [9])
+                                                      ]),
+                                                    /* Leaf */Block.__(1, [3])
+                                                  ]))));
+                            }));
+              }));
+        return /* () */0;
       }));
 
 describe("Equality", (function () {

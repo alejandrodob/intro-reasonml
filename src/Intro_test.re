@@ -294,7 +294,7 @@ describe("Functions", () => {
     expect(sum(1)) |> toBe(5);
   });
 
-  test("can be explicitly defined recursive", () => {
+  test("must be explicitly defined recursive", () => {
     let rec factorial = n => n <= 2 ? n : n * factorial(n - 1);
     expect(factorial(5)) |> toBe(120);
   });
@@ -302,6 +302,83 @@ describe("Functions", () => {
   test("can be annotated with types", () => {
     let makePoint = (a: int, b: int): Records.point => Records.{x: a, y: b};
     expect(makePoint(7, 2).x) |> toBe(7);
+  });
+});
+
+describe("Pattern matching", () => {
+  test("Single assignment is pattern matching", () => {
+    let x = 2;
+    expect(x) |> toBe(2);
+  });
+
+  test("Destructuring crazy nested data structures is pattern matching", () => {
+    open Records;
+    // let (x, [|1, 2, y|], {x: 1, y: 4}) = (1, 3); // Type error
+    // let (x, [|1, 2, y|], {x: 1, y: 4}) = (1, [||], {x: 3, y: 5}); // Does not match
+    let (x, [|1, 2, y|], {x: _, y: _}) = (1, [|1, 2, 3|], {x: 3, y: 5}); // Matches
+    expect(y) |> toBe(3);
+  });
+
+  test("Alternatives in patterns", () => {
+    // let (1 | 2, x) = (3, 2) // Does not match;
+    let (1 | 2, x) = (2, 2);
+    expect(x) |> toBe(2);
+  });
+
+  describe("Switch", () => {
+    test("On lists", () => {
+      let rec reduce = (fn, value, xs) =>
+        switch (xs) {
+        | [] => value
+        | [head, ...tail] => reduce(fn, fn(value, head), tail)
+        };
+
+      expect(reduce((sum, i) => sum + i, 0, [1, 2, 3, 4])) |> toBe(10);
+    });
+
+    test("On lists ++", () => {
+      let rec nth = (n, xs) =>
+        switch (n, xs) {
+        | (_, []) => None
+        | (0, [head, ...tail]) => Some(head)
+        | (_, [_, ...tail]) => nth(n - 1, tail)
+        };
+      expect(nth(4, [0, 1, 2, 3, 4, 5, 6])) |> toBe(Some(4));
+    });
+
+    test("On records", () => {
+      open Records;
+      let getQuadrant = ({x, y}: point) =>
+        switch (x > 0, y > 0) {
+        | (true, true) => 1
+        | (false, true) => 2
+        | (false, false) => 3
+        | (true, false) => 4
+        };
+      expect(getQuadrant({x: 3, y: (-1)})) |> toBe(4);
+    });
+
+    test("On Variants", () => {
+      open Variants;
+      let rec depth = tree =>
+        switch (tree) {
+        | Leaf(_) => 1
+        | Node(_, left, right) => 1 + max(depth(left), depth(right))
+        // | Node(_, Leaf(_), Leaf(_)) => 2
+        // | Node(_, Leaf(_), Node(_, _, _) as node) => 1 + depth(node)
+        // | Node(_, Node(_, _, _) as node, Leaf(_)) => 1 + depth(node)
+        // | Node(_, Node(_, _, _) as node, Node(_, _, _)) => 1 + depth(node)
+        };
+      let myDeepTree = Node(2, Node(1, Leaf(5), Leaf(9)), Leaf(3));
+      /* Node(2, Node(1, Leaf(5), Leaf(9)), Leaf(3))
+                   2
+                 /   \
+                1     3
+               / \
+              5   9
+         */
+      expect(depth(myDeepTree)) |> toBe(3);
+    });
   });
 });
 
